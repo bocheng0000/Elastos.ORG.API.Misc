@@ -880,6 +880,11 @@ func getErc20TokenList(w http.ResponseWriter, r *http.Request) {
 func getEthHistory(w http.ResponseWriter, r *http.Request) {
 	if config.Conf.Eth.Enable {
 		var account string
+		var to string
+		var start string
+		var iStart int
+		var end string
+		var iEnd int
 		var err error
 		if strings.ToUpper(r.Method) == "POST" {
 			b, err := ioutil.ReadAll(r.Body)
@@ -891,17 +896,35 @@ func getEthHistory(w http.ResponseWriter, r *http.Request) {
 			}
 			account = req["account"]
 			if account == "" {
-				http.Error(w, `{"result":"invalid request : `+err.Error()+`","status":`+strconv.Itoa(http.StatusBadRequest)+`}`, http.StatusBadRequest)
+				http.Error(w, `{"result":"invalid parameters : `+err.Error()+`","status":`+strconv.Itoa(http.StatusBadRequest)+`}`, http.StatusBadRequest)
 				return
 			}
 		} else {
 			account = r.FormValue("address")
+			to = r.FormValue("to")
+			start = r.FormValue("start")
+			if start != "" {
+				iStart, err = strconv.Atoi(start)
+				if err != nil {
+					http.Error(w, `{"result":"invalid parameters : `+err.Error()+`","status":`+strconv.Itoa(http.StatusBadRequest)+`}`, http.StatusBadRequest)
+					return
+				}
+			}
+
+			end = r.FormValue("end")
+			if end != "" {
+				iEnd, err = strconv.Atoi(end)
+				if err != nil {
+					http.Error(w, `{"result":"invalid parameters : `+err.Error()+`","status":`+strconv.Itoa(http.StatusBadRequest)+`}`, http.StatusBadRequest)
+					return
+				}
+			}
 		}
 		if account == "" {
 			http.Error(w, `{"result":"account can not be blank","status":`+strconv.Itoa(http.StatusBadRequest)+`}`, http.StatusBadRequest)
 			return
 		}
-		history, err := chain.GetEthHistory(account)
+		history, err := chain.GetEthHistory(account, to, iStart, iEnd)
 		if err != nil {
 			http.Error(w, `{"result":"invalid request : `+err.Error()+`","status":`+strconv.Itoa(http.StatusBadRequest)+`}`, http.StatusBadRequest)
 			return

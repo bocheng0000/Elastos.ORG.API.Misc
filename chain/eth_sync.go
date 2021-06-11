@@ -871,7 +871,7 @@ func handleHeightEth(curr int) error {
 	return nil
 }
 
-func GetEthHistory(addr string) ([]Eth_transaction, error) {
+func GetEthHistory(addr, to string, start, end int) ([]Eth_transaction, error) {
 	var buf bytes.Buffer
 	buf.Write([]byte{byte(eth_history_prefix)})
 	buf.Write(decodeHexToByte(addr))
@@ -884,9 +884,18 @@ func GetEthHistory(addr string) ([]Eth_transaction, error) {
 		if err != nil {
 			return nil, err
 		}
+		if to != "" && to != v.To {
+			continue
+		}
 		bn, err := strconv.Atoi(v.BlockNumber)
 		if err != nil {
 			return nil, err
+		}
+		if start != 0 && bn < start {
+			continue
+		}
+		if end != 0 && bn > end {
+			continue
 		}
 		if v.To == "0x" {
 			v.To = "0x0000000000000000000000000000000000000000"
